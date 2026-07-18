@@ -45,6 +45,9 @@ class GestureConfig:
     two_finger_grace_seconds: float = 0.15
     scroll_activation_distance: float = 0.012
     scroll_step_distance: float = 0.004
+    scroll_down_activation_distance: float = 0.012
+    scroll_down_step_distance: float = 0.004
+    scroll_down_wheel_multiplier: float = 1.0
     scroll_cooldown_seconds: float = 0.02
     scroll_wheel_delta: int = 30
     scroll_max_wheel_delta: int = 90
@@ -121,6 +124,22 @@ def _validate(config: AppConfig) -> None:
         raise ValueError("gestures.scroll_step_distance 必須介於 0.002 與 0.10")
     if config.gestures.scroll_activation_distance < config.gestures.scroll_step_distance:
         raise ValueError("scroll_activation_distance 不可小於 scroll_step_distance")
+    if not 0.002 <= config.gestures.scroll_down_step_distance <= 0.10:
+        raise ValueError(
+            "gestures.scroll_down_step_distance 必須介於 0.002 與 0.10"
+        )
+    if (
+        config.gestures.scroll_down_activation_distance
+        < config.gestures.scroll_down_step_distance
+    ):
+        raise ValueError(
+            "scroll_down_activation_distance 不可小於 "
+            "scroll_down_step_distance"
+        )
+    if not 0.5 <= config.gestures.scroll_down_wheel_multiplier <= 3.0:
+        raise ValueError(
+            "gestures.scroll_down_wheel_multiplier 必須介於 0.5 與 3.0"
+        )
     if not 10 <= config.gestures.scroll_wheel_delta <= 120:
         raise ValueError("gestures.scroll_wheel_delta 必須介於 10 與 120")
     if not (

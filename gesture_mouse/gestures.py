@@ -52,11 +52,31 @@ class MotionGestureDetector:
         self._axis = None
         self._vertical_direction = None
 
-    def _wheel_delta(self, distance: float) -> int:
-        speed_ratio = max(1.0, distance / self.config.scroll_step_distance)
+    def _activation_distance(self, delta_y: float) -> float:
+        if delta_y > 0:
+            return self.config.scroll_down_activation_distance
+        return self.config.scroll_activation_distance
+
+    def _step_distance(self, direction: int) -> float:
+        if direction > 0:
+            return self.config.scroll_down_step_distance
+        return self.config.scroll_step_distance
+
+    def _wheel_delta(self, distance: float, direction: int) -> int:
+        step_distance = self._step_distance(direction)
+        speed_ratio = max(1.0, distance / step_distance)
+        direction_multiplier = (
+            self.config.scroll_down_wheel_multiplier
+            if direction > 0
+            else 1.0
+        )
         return min(
             self.config.scroll_max_wheel_delta,
-            round(self.config.scroll_wheel_delta * speed_ratio),
+            round(
+                self.config.scroll_wheel_delta
+                * speed_ratio
+                * direction_multiplier
+            ),
         )
 
     def update(self, now: float, point: Point) -> MotionResult | None:
@@ -86,7 +106,7 @@ class MotionGestureDetector:
             ):
                 self._axis = "horizontal"
             elif (
-                abs(delta_y) >= self.config.scroll_activation_distance
+                abs(delta_y) >= self._activation_distance(delta_y)
                 and abs(delta_x) <= abs(delta_y) * axis_ratio
             ):
                 self._axis = "vertical"
@@ -101,16 +121,20 @@ class MotionGestureDetector:
 
         if self._axis == "vertical" and self._scroll_anchor_y is not None:
             scroll_delta = point[1] - self._scroll_anchor_y
-            if abs(scroll_delta) < self.config.scroll_step_distance:
-                return None
             direction = -1 if scroll_delta < 0 else 1
+            if (
+                self.config.scroll_direction_lock_until_release
+                and self._vertical_direction is not None
+                and direction != self._vertical_direction
+            ):
+                self._scroll_anchor_y = point[1]
+                return None
+            if abs(scroll_delta) < self._step_distance(direction):
+                return None
             if (
                 self._vertical_direction is not None
                 and direction != self._vertical_direction
             ):
-                if self.config.scroll_direction_lock_until_release:
-                    self._scroll_anchor_y = point[1]
-                    return None
                 if (
                     now - self._last_scroll_at
                     < self.config.scroll_reverse_lock_seconds
@@ -124,7 +148,7 @@ class MotionGestureDetector:
                     GestureEvent.SCROLL_UP
                     if direction < 0
                     else GestureEvent.SCROLL_DOWN,
-                    self._wheel_delta(abs(scroll_delta)),
+                    self._wheel_delta(abs(scroll_delta), direction),
                 )
             if (
                 now - self._last_scroll_at
@@ -140,7 +164,7 @@ class MotionGestureDetector:
                 GestureEvent.SCROLL_UP
                 if direction < 0
                 else GestureEvent.SCROLL_DOWN,
-                self._wheel_delta(abs(scroll_delta)),
+                self._wheel_delta(abs(scroll_delta), direction),
             )
         return None
 

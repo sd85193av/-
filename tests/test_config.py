@@ -12,6 +12,14 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(
             config.gestures.scroll_direction_lock_until_release
         )
+        self.assertLess(
+            config.gestures.scroll_down_activation_distance,
+            config.gestures.scroll_activation_distance,
+        )
+        self.assertLess(
+            config.gestures.scroll_down_step_distance,
+            config.gestures.scroll_step_distance,
+        )
         self.assertEqual(
             config.display.detail_follow_window_title,
             "ChatGPT",

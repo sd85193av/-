@@ -80,7 +80,9 @@
 - `gestures.scroll_only`：只允許上下滾動。
 - `gestures.scroll_direction_lock_until_release`：鎖定方向直到放開兩指。
 - `gestures.scroll_step_distance`：每次觸發所需的手部位移。
+- `gestures.scroll_down_activation_distance`：向下開始滾動所需的位移。
+- `gestures.scroll_down_step_distance`：向下連續觸發的步進距離。
+- `gestures.scroll_down_wheel_multiplier`：向下滾動量補償倍率。
 - `gestures.scroll_wheel_delta`：基礎滾動量。
 - `gestures.scroll_max_wheel_delta`：快速移動時的最大滾動量。
 - `display.detail_follow_window_title`：監測視窗要跟隨的視窗標題。
-

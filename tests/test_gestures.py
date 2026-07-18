@@ -265,6 +265,53 @@ class ScrollOnlyGestureEngineTests(unittest.TestCase):
         self.assertEqual(upward.events, (GestureEvent.SCROLL_UP,))
         self.assertGreater(upward.scroll_wheel_delta, 0)
 
+    def test_small_downward_motion_is_more_sensitive_and_continuous(self):
+        engine = GestureEngine(
+            GestureConfig(
+                scroll_only=True,
+                scroll_direction_lock_until_release=True,
+                scroll_down_activation_distance=0.008,
+                scroll_down_step_distance=0.002,
+                scroll_down_wheel_multiplier=1.15,
+            )
+        )
+        engine.update(
+            metrics(two_finger=True, wrist=(0.5, 0.500)),
+            1.0,
+        )
+        first = engine.update(
+            metrics(two_finger=True, wrist=(0.5, 0.513)),
+            1.04,
+        )
+        second = engine.update(
+            metrics(two_finger=True, wrist=(0.5, 0.520)),
+            1.08,
+        )
+        self.assertEqual(first.events, (GestureEvent.SCROLL_DOWN,))
+        self.assertEqual(second.events, (GestureEvent.SCROLL_DOWN,))
+        self.assertGreater(first.scroll_wheel_delta, 0)
+        self.assertGreater(second.scroll_wheel_delta, 0)
+
+    def test_same_small_upward_motion_keeps_original_threshold(self):
+        engine = GestureEngine(
+            GestureConfig(
+                scroll_only=True,
+                scroll_direction_lock_until_release=True,
+                scroll_down_activation_distance=0.008,
+                scroll_down_step_distance=0.002,
+                scroll_down_wheel_multiplier=1.15,
+            )
+        )
+        engine.update(
+            metrics(two_finger=True, wrist=(0.5, 0.500)),
+            1.0,
+        )
+        small_upward = engine.update(
+            metrics(two_finger=True, wrist=(0.5, 0.487)),
+            1.04,
+        )
+        self.assertEqual(small_upward.events, ())
+
     def test_returning_down_after_up_does_not_scroll_down(self):
         self.engine.update(
             metrics(two_finger=True, wrist=(0.5, 0.70)),
