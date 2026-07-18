@@ -10,6 +10,11 @@ class ConfigTests(unittest.TestCase):
         config = load_config(config_path)
         self.assertTrue(config.gestures.scroll_only)
         self.assertTrue(config.gestures.pointer_enabled)
+        self.assertTrue(config.gestures.thumb_click_enabled)
+        self.assertLess(
+            config.gestures.thumb_click_release_threshold,
+            config.gestures.thumb_click_open_threshold,
+        )
         self.assertFalse(
             config.gestures.scroll_direction_lock_until_release
         )

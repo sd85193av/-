@@ -13,6 +13,7 @@ def metrics(
     open_palm=False,
     closed_fist=False,
     two_finger=False,
+    thumb_ratio=0.0,
     wrist=(0.5, 0.7),
 ):
     return GestureMetrics(
@@ -22,6 +23,7 @@ def metrics(
         middle_pinch_ratio=middle_ratio,
         index_extended=index_extended,
         open_palm=open_palm,
+        thumb_open_ratio=thumb_ratio,
         middle_extended=two_finger,
         closed_fist=closed_fist,
         motion_point=wrist,
@@ -279,6 +281,64 @@ class ScrollOnlyGestureEngineTests(unittest.TestCase):
         self.assertFalse(two_finger.cursor_active)
         self.assertFalse(fist.cursor_active)
         self.assertEqual(fist.events, ())
+
+    def test_outward_thumb_clicks_once_until_retracted(self):
+        engine = GestureEngine(
+            GestureConfig(
+                scroll_only=True,
+                pointer_enabled=True,
+                thumb_click_enabled=True,
+                thumb_click_open_threshold=1.20,
+                thumb_click_release_threshold=1.05,
+                thumb_click_hold_seconds=0.10,
+                thumb_click_min_frames=3,
+                thumb_click_cooldown_seconds=0.35,
+            )
+        )
+        opening = [
+            engine.update(metrics(thumb_ratio=1.35), now)
+            for now in (1.00, 1.06, 1.12)
+        ]
+        held = engine.update(metrics(thumb_ratio=1.35), 1.20)
+        engine.update(metrics(thumb_ratio=0.90), 1.30)
+        reopened = [
+            engine.update(metrics(thumb_ratio=1.35), now)
+            for now in (1.50, 1.56, 1.62)
+        ]
+        self.assertNotIn(GestureEvent.LEFT_CLICK, opening[0].events)
+        self.assertIn(GestureEvent.LEFT_CLICK, opening[-1].events)
+        self.assertNotIn(GestureEvent.LEFT_CLICK, held.events)
+        self.assertIn(GestureEvent.LEFT_CLICK, reopened[-1].events)
+
+    def test_thumb_does_not_click_during_two_finger_scroll(self):
+        engine = GestureEngine(
+            GestureConfig(
+                scroll_only=True,
+                pointer_enabled=True,
+                thumb_click_enabled=True,
+                thumb_click_open_threshold=1.20,
+                thumb_click_release_threshold=1.05,
+                thumb_click_hold_seconds=0.10,
+                thumb_click_min_frames=3,
+            )
+        )
+        results = [
+            engine.update(
+                metrics(
+                    two_finger=True,
+                    thumb_ratio=1.50,
+                    wrist=(0.5, 0.70 - index * 0.02),
+                ),
+                1.0 + index * 0.06,
+            )
+            for index in range(5)
+        ]
+        self.assertTrue(
+            all(
+                GestureEvent.LEFT_CLICK not in result.events
+                for result in results
+            )
+        )
 
     def test_vertical_two_finger_motion_still_scrolls(self):
         self.engine.update(

@@ -45,6 +45,31 @@ class GeometryTests(unittest.TestCase):
         self.assertTrue(result.closed_fist)
         self.assertFalse(result.two_finger_gesture)
 
+    def test_outward_thumb_has_larger_open_ratio(self):
+        tucked = landmark_set()
+        outward = landmark_set()
+        for points in (tucked, outward):
+            points[0] = SimpleNamespace(x=0.5, y=0.85)
+            set_finger(
+                points,
+                5,
+                6,
+                8,
+                (0.42, 0.65),
+                (0.40, 0.50),
+                (0.38, 0.25),
+            )
+            points[9] = SimpleNamespace(x=0.50, y=0.62)
+            points[17] = SimpleNamespace(x=0.65, y=0.68)
+        tucked[4] = SimpleNamespace(x=0.47, y=0.68)
+        outward[4] = SimpleNamespace(x=0.28, y=0.62)
+
+        tucked_result = analyze_landmarks(tucked)
+        outward_result = analyze_landmarks(outward)
+
+        self.assertLess(tucked_result.thumb_open_ratio, 1.05)
+        self.assertGreater(outward_result.thumb_open_ratio, 1.20)
+
 
 if __name__ == "__main__":
     unittest.main()

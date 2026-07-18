@@ -336,13 +336,20 @@ def run(
                             controller.move(*cursor_position)
                     if control_enabled and now >= activation_at:
                         for event in gesture_frame.events:
-                            if (
-                                config.gestures.scroll_only
-                                and event
-                                not in {
+                            allowed_in_scroll_only = (
+                                event
+                                in {
                                     GestureEvent.SCROLL_UP,
                                     GestureEvent.SCROLL_DOWN,
                                 }
+                                or (
+                                    config.gestures.thumb_click_enabled
+                                    and event == GestureEvent.LEFT_CLICK
+                                )
+                            )
+                            if (
+                                config.gestures.scroll_only
+                                and not allowed_in_scroll_only
                             ):
                                 continue
                             action = perform_event(

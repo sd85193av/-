@@ -21,6 +21,7 @@ class GestureMetrics:
     middle_pinch_ratio: float
     index_extended: bool
     open_palm: bool
+    thumb_open_ratio: float = 0.0
     middle_extended: bool = False
     ring_extended: bool = False
     pinky_extended: bool = False
@@ -107,6 +108,7 @@ def analyze_landmarks(landmarks: Sequence[LandmarkLike]) -> GestureMetrics:
         open_palm=(
             index_extended and middle_extended and ring_extended and pinky_extended
         ),
+        thumb_open_ratio=distance(thumb_tip, point(landmarks, 17)) / palm_scale,
         middle_extended=middle_extended,
         ring_extended=ring_extended,
         pinky_extended=pinky_extended,
