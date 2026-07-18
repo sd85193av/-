@@ -28,6 +28,7 @@ class CursorConfig:
 @dataclass(frozen=True)
 class GestureConfig:
     scroll_only: bool = False
+    pointer_enabled: bool = False
     pinch_threshold: float = 0.34
     pinch_release_ratio: float = 1.40
     drag_hold_seconds: float = 0.35
@@ -52,6 +53,10 @@ class GestureConfig:
     scroll_wheel_delta: int = 30
     scroll_max_wheel_delta: int = 90
     scroll_direction_lock_until_release: bool = False
+    scroll_return_motion_suppression: bool = False
+    scroll_direction_switch_seconds: float = 0.22
+    scroll_direction_switch_distance: float = 0.06
+    scroll_direction_switch_min_frames: int = 4
     scroll_reverse_lock_seconds: float = 0.08
     scroll_reverse_distance: float = 0.018
 
@@ -139,6 +144,18 @@ def _validate(config: AppConfig) -> None:
     if not 0.5 <= config.gestures.scroll_down_wheel_multiplier <= 3.0:
         raise ValueError(
             "gestures.scroll_down_wheel_multiplier 必須介於 0.5 與 3.0"
+        )
+    if not 0.05 <= config.gestures.scroll_direction_switch_seconds <= 1.0:
+        raise ValueError(
+            "gestures.scroll_direction_switch_seconds 必須介於 0.05 與 1.0"
+        )
+    if not 0.01 <= config.gestures.scroll_direction_switch_distance <= 0.30:
+        raise ValueError(
+            "gestures.scroll_direction_switch_distance 必須介於 0.01 與 0.30"
+        )
+    if not 2 <= config.gestures.scroll_direction_switch_min_frames <= 30:
+        raise ValueError(
+            "gestures.scroll_direction_switch_min_frames 必須介於 2 與 30"
         )
     if not 10 <= config.gestures.scroll_wheel_delta <= 120:
         raise ValueError("gestures.scroll_wheel_delta 必須介於 10 與 120")

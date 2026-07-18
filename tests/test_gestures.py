@@ -218,7 +218,10 @@ class ScrollOnlyGestureEngineTests(unittest.TestCase):
         self.engine = GestureEngine(
             GestureConfig(
                 scroll_only=True,
-                scroll_direction_lock_until_release=True,
+                scroll_return_motion_suppression=True,
+                scroll_direction_switch_seconds=0.22,
+                scroll_direction_switch_distance=0.06,
+                scroll_direction_switch_min_frames=4,
             )
         )
 
@@ -252,6 +255,30 @@ class ScrollOnlyGestureEngineTests(unittest.TestCase):
         self.assertTrue(
             all(navigation_events.isdisjoint(result.events) for result in results)
         )
+
+    def test_index_only_moves_pointer_without_clicking(self):
+        engine = GestureEngine(
+            GestureConfig(
+                scroll_only=True,
+                pointer_enabled=True,
+                scroll_return_motion_suppression=True,
+            )
+        )
+        pointer = engine.update(metrics(index_extended=True), 1.0)
+        two_finger = engine.update(
+            metrics(two_finger=True, wrist=(0.5, 0.5)),
+            1.2,
+        )
+        fist = engine.update(
+            metrics(index_extended=False, closed_fist=True),
+            1.4,
+        )
+        self.assertTrue(pointer.cursor_active)
+        self.assertEqual(pointer.mode, "POINTER")
+        self.assertEqual(pointer.events, ())
+        self.assertFalse(two_finger.cursor_active)
+        self.assertFalse(fist.cursor_active)
+        self.assertEqual(fist.events, ())
 
     def test_vertical_two_finger_motion_still_scrolls(self):
         self.engine.update(
@@ -354,6 +381,33 @@ class ScrollOnlyGestureEngineTests(unittest.TestCase):
         self.assertEqual(returning.events, ())
         self.assertEqual(
             downward_again.events,
+            (GestureEvent.SCROLL_DOWN,),
+        )
+
+    def test_sustained_reverse_switches_direction_without_release(self):
+        self.engine.update(
+            metrics(two_finger=True, wrist=(0.5, 0.70)),
+            1.0,
+        )
+        upward = self.engine.update(
+            metrics(two_finger=True, wrist=(0.5, 0.58)),
+            1.2,
+        )
+        reverse_results = [
+            self.engine.update(metrics(two_finger=True, wrist=point), now)
+            for point, now in (
+                ((0.5, 0.70), 1.30),
+                ((0.5, 0.78), 1.40),
+                ((0.5, 0.86), 1.50),
+                ((0.5, 0.92), 1.56),
+            )
+        ]
+        self.assertEqual(upward.events, (GestureEvent.SCROLL_UP,))
+        self.assertTrue(
+            all(result.events == () for result in reverse_results[:-1])
+        )
+        self.assertEqual(
+            reverse_results[-1].events,
             (GestureEvent.SCROLL_DOWN,),
         )
 

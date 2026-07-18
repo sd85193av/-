@@ -330,7 +330,6 @@ def run(
                     if (
                         gesture_frame.cursor_active
                         and gesture_frame.control_point is not None
-                        and not config.gestures.scroll_only
                     ):
                         cursor_position = cursor.map(gesture_frame.control_point)
                         if control_enabled and now >= activation_at:

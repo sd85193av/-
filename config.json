@@ -16,6 +16,7 @@
   },
   "gestures": {
     "scroll_only": true,
+    "pointer_enabled": true,
     "pinch_threshold": 0.34,
     "pinch_release_ratio": 1.4,
     "drag_hold_seconds": 0.35,
@@ -39,7 +40,11 @@
     "scroll_cooldown_seconds": 0.02,
     "scroll_wheel_delta": 30,
     "scroll_max_wheel_delta": 90,
-    "scroll_direction_lock_until_release": true,
+    "scroll_direction_lock_until_release": false,
+    "scroll_return_motion_suppression": true,
+    "scroll_direction_switch_seconds": 0.22,
+    "scroll_direction_switch_distance": 0.06,
+    "scroll_direction_switch_min_frames": 4,
     "scroll_reverse_lock_seconds": 0.08,
     "scroll_reverse_distance": 0.018
   },

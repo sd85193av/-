@@ -1,20 +1,20 @@
-# 手勢上下滾動控制器
+# 手勢上下滾動與游標控制器
 
-這是一個 Windows 手勢控制原型，使用筆電攝影機與 MediaPipe 在本機追蹤手部關節，透過「食指＋中指」的上下移動控制畫面滾動。
+這是一個 Windows 手勢控制原型，使用筆電攝影機與 MediaPipe 在本機追蹤手部關節。單獨伸出食指可移動鼠標，伸出食指＋中指可控制畫面上下滾動。
 
 攝影機影像只在本機即時處理，不會上傳或儲存。
 
 ## 目前啟用的手勢
 
-僅保留兩指上下滾動：
+目前只保留游標移動與兩指上下滾動：
 
+- 單獨伸出食指：鼠標跟隨食指位置移動，不會點擊。
 - 食指＋中指往上移動：畫面往上滾動。
 - 食指＋中指往下移動：畫面往下滾動。
-- 一次兩指手勢會鎖定第一次判定的方向。
-- 手移回起點的反方向動作不會觸發滾動。
-- 若要切換方向，短暫收起中指，再重新伸出食指＋中指。
+- 短促的反方向動作會視為回手，不會觸發反向滾動。
+- 反方向持續達到時間與距離門檻後會自動切換方向，不必收起手指。
 
-游標移動、握拳點擊、拖曳、右鍵、上一頁與下一頁目前全部停用。
+握拳點擊、拖曳、右鍵、上一頁與下一頁目前全部停用。
 
 ## 監測視窗
 
@@ -69,16 +69,20 @@
 
 - 兩指上下滾動。
 - 上下回手動作不會反向觸發。
-- 放開兩指後可以切換方向。
-- 其他點擊、拖曳、翻頁與游標功能在 scroll-only 模式下停用。
+- 持續反向移動可在不收手指的情況下切換方向。
+- 單食指只移動游標，不會產生點擊事件。
+- 其他點擊、拖曳與翻頁功能在 scroll-only 模式下停用。
 - 設定載入、手部幾何判定與監測面板繪製。
 
 ## 主要設定
 
 設定檔位於 `config.json`：
 
-- `gestures.scroll_only`：只允許上下滾動。
-- `gestures.scroll_direction_lock_until_release`：鎖定方向直到放開兩指。
+- `gestures.scroll_only`：停用點擊、拖曳與翻頁手勢。
+- `gestures.pointer_enabled`：允許單食指移動游標。
+- `gestures.scroll_return_motion_suppression`：抑制短促的反向回手動作。
+- `gestures.scroll_direction_switch_seconds`：自動切換方向所需的持續時間。
+- `gestures.scroll_direction_switch_distance`：自動切換方向所需的反向位移。
 - `gestures.scroll_step_distance`：每次觸發所需的手部位移。
 - `gestures.scroll_down_activation_distance`：向下開始滾動所需的位移。
 - `gestures.scroll_down_step_distance`：向下連續觸發的步進距離。

@@ -9,8 +9,12 @@ class ConfigTests(unittest.TestCase):
         config_path = Path(__file__).resolve().parents[1] / "config.json"
         config = load_config(config_path)
         self.assertTrue(config.gestures.scroll_only)
-        self.assertTrue(
+        self.assertTrue(config.gestures.pointer_enabled)
+        self.assertFalse(
             config.gestures.scroll_direction_lock_until_release
+        )
+        self.assertTrue(
+            config.gestures.scroll_return_motion_suppression
         )
         self.assertLess(
             config.gestures.scroll_down_activation_distance,

@@ -45,12 +45,23 @@ class MotionGestureDetector:
         self._scroll_anchor_y: float | None = None
         self._axis: str | None = None
         self._vertical_direction: int | None = None
+        self._reverse_direction: int | None = None
+        self._reverse_started_at: float | None = None
+        self._reverse_start_y: float | None = None
+        self._reverse_frames = 0
 
     def reset(self) -> None:
         self._samples.clear()
         self._scroll_anchor_y = None
         self._axis = None
         self._vertical_direction = None
+        self._reset_reverse_candidate()
+
+    def _reset_reverse_candidate(self) -> None:
+        self._reverse_direction = None
+        self._reverse_started_at = None
+        self._reverse_start_y = None
+        self._reverse_frames = 0
 
     def _activation_distance(self, delta_y: float) -> float:
         if delta_y > 0:
@@ -121,6 +132,11 @@ class MotionGestureDetector:
 
         if self._axis == "vertical" and self._scroll_anchor_y is not None:
             scroll_delta = point[1] - self._scroll_anchor_y
+            if abs(scroll_delta) < min(
+                self.config.scroll_step_distance,
+                self.config.scroll_down_step_distance,
+            ):
+                return None
             direction = -1 if scroll_delta < 0 else 1
             if (
                 self.config.scroll_direction_lock_until_release
@@ -129,12 +145,50 @@ class MotionGestureDetector:
             ):
                 self._scroll_anchor_y = point[1]
                 return None
-            if abs(scroll_delta) < self._step_distance(direction):
-                return None
             if (
                 self._vertical_direction is not None
                 and direction != self._vertical_direction
             ):
+                if self.config.scroll_return_motion_suppression:
+                    if self._reverse_direction != direction:
+                        self._reverse_direction = direction
+                        self._reverse_started_at = now
+                        self._reverse_start_y = self._scroll_anchor_y
+                        self._reverse_frames = 1
+                    else:
+                        self._reverse_frames += 1
+                    reverse_duration = now - (
+                        self._reverse_started_at
+                        if self._reverse_started_at is not None
+                        else now
+                    )
+                    reverse_distance = abs(
+                        point[1]
+                        - (
+                            self._reverse_start_y
+                            if self._reverse_start_y is not None
+                            else point[1]
+                        )
+                    )
+                    self._scroll_anchor_y = point[1]
+                    if not (
+                        reverse_duration
+                        >= self.config.scroll_direction_switch_seconds
+                        and reverse_distance
+                        >= self.config.scroll_direction_switch_distance
+                        and self._reverse_frames
+                        >= self.config.scroll_direction_switch_min_frames
+                    ):
+                        return None
+                    self._vertical_direction = direction
+                    self._last_scroll_at = now
+                    self._reset_reverse_candidate()
+                    return MotionResult(
+                        GestureEvent.SCROLL_UP
+                        if direction < 0
+                        else GestureEvent.SCROLL_DOWN,
+                        self._wheel_delta(abs(scroll_delta), direction),
+                    )
                 if (
                     now - self._last_scroll_at
                     < self.config.scroll_reverse_lock_seconds
@@ -150,6 +204,9 @@ class MotionGestureDetector:
                     else GestureEvent.SCROLL_DOWN,
                     self._wheel_delta(abs(scroll_delta), direction),
                 )
+            self._reset_reverse_candidate()
+            if abs(scroll_delta) < self._step_distance(direction):
+                return None
             if (
                 now - self._last_scroll_at
                 < self.config.scroll_cooldown_seconds
@@ -295,11 +352,19 @@ class GestureEngine:
             self._middle_pinched = False
             self._dragging = False
             self._reset_fist_candidate()
+            pointer_active = (
+                self.config.pointer_enabled
+                and metrics.index_extended
+                and not metrics.middle_extended
+                and not metrics.ring_extended
+                and not metrics.pinky_extended
+                and not metrics.closed_fist
+            )
             return GestureFrame(
                 events=(),
-                cursor_active=False,
+                cursor_active=pointer_active,
                 control_point=metrics.control_point,
-                mode="SCROLL ONLY",
+                mode="POINTER" if pointer_active else "SCROLL ONLY",
             )
 
         if metrics.closed_fist:
