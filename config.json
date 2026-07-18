@@ -1,0 +1,57 @@
+{
+  "camera": {
+    "index": 0,
+    "width": 960,
+    "height": 540,
+    "fps": 30,
+    "detection_confidence": 0.65,
+    "presence_confidence": 0.6,
+    "tracking_confidence": 0.6
+  },
+  "cursor": {
+    "horizontal_margin": 0.12,
+    "vertical_margin": 0.12,
+    "smoothing": 0.35,
+    "minimum_move_pixels": 1.5
+  },
+  "gestures": {
+    "scroll_only": true,
+    "pinch_threshold": 0.34,
+    "pinch_release_ratio": 1.4,
+    "drag_hold_seconds": 0.35,
+    "fist_hold_seconds": 0.25,
+    "fist_min_stable_frames": 6,
+    "fist_click_cooldown_seconds": 0.35,
+    "fist_after_motion_suppression_seconds": 0.45,
+    "right_click_cooldown_seconds": 0.55,
+    "swipe_distance": 0.18,
+    "swipe_window_seconds": 0.55,
+    "swipe_cooldown_seconds": 0.9,
+    "maximum_swipe_vertical_ratio": 0.7,
+    "motion_smoothing": 0.65,
+    "motion_min_duration_seconds": 0.02,
+    "two_finger_grace_seconds": 0.15,
+    "scroll_activation_distance": 0.012,
+    "scroll_step_distance": 0.004,
+    "scroll_cooldown_seconds": 0.02,
+    "scroll_wheel_delta": 30,
+    "scroll_max_wheel_delta": 90,
+    "scroll_direction_lock_until_release": true,
+    "scroll_reverse_lock_seconds": 0.08,
+    "scroll_reverse_distance": 0.018
+  },
+  "display": {
+    "preview": true,
+    "show_landmarks": true,
+    "always_on_top": false,
+    "detail_window": true,
+    "detail_always_on_top": false,
+    "show_landmark_numbers": true,
+    "detail_follow_window_title": "ChatGPT",
+    "detail_monitor_index": 1,
+    "detail_window_width": 560,
+    "detail_window_height": 720
+  },
+  "navigation_mode": "browser",
+  "activation_delay_seconds": 2.0
+}
