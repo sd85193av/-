@@ -11,7 +11,7 @@
   "cursor": {
     "horizontal_margin": 0.12,
     "vertical_margin": 0.12,
-    "smoothing": 0.35,
+    "smoothing": 0.55,
     "minimum_move_pixels": 1.5
   },
   "gestures": {
