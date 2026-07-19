@@ -86,15 +86,13 @@ def _metric_bar(
     value: float,
     threshold: float,
     y: int,
-    *,
-    active_above: bool = False,
 ) -> None:
     left = 178
     width = 330
     maximum = 1.20
     fill = round(min(value / maximum, 1.0) * width)
     threshold_x = left + round(min(threshold / maximum, 1.0) * width)
-    active = value >= threshold if active_above else value <= threshold
+    active = value <= threshold
     color = (70, 210, 110) if active else (70, 150, 235)
     _put_text(canvas, label, 24, y + 13, scale=0.48)
     cv2.rectangle(canvas, (left, y), (left + width, y + 16), (65, 65, 65), -1)
@@ -108,11 +106,7 @@ def _metric_bar(
     )
     _put_text(
         canvas,
-        (
-            f"{value:.2f}  {'OPEN' if active else 'CLOSED'}"
-            if active_above
-            else f"{value:.2f}  {'PINCHED' if active else 'OPEN'}"
-        ),
+        f"{value:.2f}  {'PINCHED' if active else 'OPEN'}",
         left + 6,
         y + 14,
         scale=0.40,
@@ -133,7 +127,6 @@ def create_tracking_view(
     latest_action: str,
     fps: float,
     pinch_threshold: float,
-    pinky_open_threshold: float,
     paused: bool,
     control_enabled: bool,
     show_landmark_numbers: bool,
@@ -199,11 +192,10 @@ def create_tracking_view(
         )
         _metric_bar(
             canvas,
-            "PINKY OPEN",
-            metrics.pinky_open_ratio,
-            pinky_open_threshold,
+            "MIDDLE PINCH",
+            metrics.middle_pinch_ratio,
+            pinch_threshold,
             562,
-            active_above=True,
         )
         fingers = (
             ("I", metrics.index_extended),
@@ -245,7 +237,7 @@ def create_tracking_view(
     cv2.line(canvas, (20, 648), (DETAIL_WIDTH - 20, 648), (75, 75, 75), 1)
     _put_text(
         canvas,
-        "Landmarks: 0=wrist, 8=index, 12=middle, 20=pinky",
+        "Landmarks: 0=wrist, 4=thumb, 8=index, 12=middle",
         24,
         674,
         scale=0.43,
