@@ -29,12 +29,12 @@ class CursorConfig:
 class GestureConfig:
     scroll_only: bool = False
     pointer_enabled: bool = False
-    thumb_click_enabled: bool = False
-    thumb_click_open_threshold: float = 1.20
-    thumb_click_release_threshold: float = 1.05
-    thumb_click_hold_seconds: float = 0.12
-    thumb_click_min_frames: int = 3
-    thumb_click_cooldown_seconds: float = 0.35
+    pinky_click_enabled: bool = False
+    pinky_click_open_threshold: float = 1.15
+    pinky_click_release_threshold: float = 0.90
+    pinky_click_hold_seconds: float = 0.12
+    pinky_click_min_frames: int = 3
+    pinky_click_cooldown_seconds: float = 0.35
     pinch_threshold: float = 0.34
     pinch_release_ratio: float = 1.40
     drag_hold_seconds: float = 0.35
@@ -121,27 +121,27 @@ def _validate(config: AppConfig) -> None:
         raise ValueError("gestures.pinch_threshold 必須大於 0")
     if config.gestures.pinch_release_ratio <= 1:
         raise ValueError("gestures.pinch_release_ratio 必須大於 1")
-    if config.gestures.thumb_click_open_threshold <= 0:
-        raise ValueError("gestures.thumb_click_open_threshold 必須大於 0")
+    if config.gestures.pinky_click_open_threshold <= 0:
+        raise ValueError("gestures.pinky_click_open_threshold 必須大於 0")
     if not (
         0
-        < config.gestures.thumb_click_release_threshold
-        < config.gestures.thumb_click_open_threshold
+        < config.gestures.pinky_click_release_threshold
+        < config.gestures.pinky_click_open_threshold
     ):
         raise ValueError(
-            "thumb_click_release_threshold 必須大於 0 且小於開啟門檻"
+            "pinky_click_release_threshold 必須大於 0 且小於開啟門檻"
         )
-    if not 0.05 <= config.gestures.thumb_click_hold_seconds <= 1.0:
+    if not 0.05 <= config.gestures.pinky_click_hold_seconds <= 1.0:
         raise ValueError(
-            "gestures.thumb_click_hold_seconds 必須介於 0.05 與 1.0"
+            "gestures.pinky_click_hold_seconds 必須介於 0.05 與 1.0"
         )
-    if not 2 <= config.gestures.thumb_click_min_frames <= 30:
+    if not 2 <= config.gestures.pinky_click_min_frames <= 30:
         raise ValueError(
-            "gestures.thumb_click_min_frames 必須介於 2 與 30"
+            "gestures.pinky_click_min_frames 必須介於 2 與 30"
         )
-    if not 0.10 <= config.gestures.thumb_click_cooldown_seconds <= 2.0:
+    if not 0.10 <= config.gestures.pinky_click_cooldown_seconds <= 2.0:
         raise ValueError(
-            "gestures.thumb_click_cooldown_seconds 必須介於 0.10 與 2.0"
+            "gestures.pinky_click_cooldown_seconds 必須介於 0.10 與 2.0"
         )
     if config.gestures.fist_hold_seconds < 0.05:
         raise ValueError("gestures.fist_hold_seconds 不可小於 0.05")

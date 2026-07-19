@@ -343,7 +343,7 @@ def run(
                                     GestureEvent.SCROLL_DOWN,
                                 }
                                 or (
-                                    config.gestures.thumb_click_enabled
+                                    config.gestures.pinky_click_enabled
                                     and event == GestureEvent.LEFT_CLICK
                                 )
                             )
@@ -409,6 +409,9 @@ def run(
                             latest_action=latest_action,
                             fps=fps,
                             pinch_threshold=config.gestures.pinch_threshold,
+                            pinky_open_threshold=(
+                                config.gestures.pinky_click_open_threshold
+                            ),
                             paused=paused,
                             control_enabled=control_enabled,
                             show_landmark_numbers=(

@@ -238,10 +238,10 @@ class GestureEngine:
         self._fist_latched = False
         self._last_fist_click_at = float("-inf")
         self._last_right_click_at = float("-inf")
-        self._thumb_click_started_at: float | None = None
-        self._thumb_click_stable_frames = 0
-        self._thumb_click_latched = False
-        self._last_thumb_click_at = float("-inf")
+        self._pinky_click_started_at: float | None = None
+        self._pinky_click_stable_frames = 0
+        self._pinky_click_latched = False
+        self._last_pinky_click_at = float("-inf")
         self._last_two_finger_at = float("-inf")
         self._smoothed_motion_point: Point | None = None
         self._motion_session_active = False
@@ -270,38 +270,44 @@ class GestureEngine:
         self._fist_stable_frames = 0
         self._fist_latched = False
 
-    def _reset_thumb_click(self) -> None:
-        self._thumb_click_started_at = None
-        self._thumb_click_stable_frames = 0
-        self._thumb_click_latched = False
+    def _reset_pinky_click(self) -> None:
+        self._pinky_click_started_at = None
+        self._pinky_click_stable_frames = 0
+        self._pinky_click_latched = False
 
-    def _thumb_click_triggered(
+    def _pinky_click_triggered(
         self,
         metrics: GestureMetrics,
         now: float,
     ) -> bool:
-        ratio = metrics.thumb_open_ratio
-        if self._thumb_click_latched:
-            if ratio <= self.config.thumb_click_release_threshold:
-                self._reset_thumb_click()
+        ratio = metrics.pinky_open_ratio
+        if self._pinky_click_latched:
+            if (
+                not metrics.pinky_extended
+                or ratio <= self.config.pinky_click_release_threshold
+            ):
+                self._reset_pinky_click()
             return False
-        if ratio < self.config.thumb_click_open_threshold:
-            self._thumb_click_started_at = None
-            self._thumb_click_stable_frames = 0
-            return False
-        if self._thumb_click_started_at is None:
-            self._thumb_click_started_at = now
-        self._thumb_click_stable_frames += 1
         if (
-            now - self._thumb_click_started_at
-            >= self.config.thumb_click_hold_seconds
-            and self._thumb_click_stable_frames
-            >= self.config.thumb_click_min_frames
-            and now - self._last_thumb_click_at
-            >= self.config.thumb_click_cooldown_seconds
+            not metrics.pinky_extended
+            or ratio < self.config.pinky_click_open_threshold
         ):
-            self._thumb_click_latched = True
-            self._last_thumb_click_at = now
+            self._pinky_click_started_at = None
+            self._pinky_click_stable_frames = 0
+            return False
+        if self._pinky_click_started_at is None:
+            self._pinky_click_started_at = now
+        self._pinky_click_stable_frames += 1
+        if (
+            now - self._pinky_click_started_at
+            >= self.config.pinky_click_hold_seconds
+            and self._pinky_click_stable_frames
+            >= self.config.pinky_click_min_frames
+            and now - self._last_pinky_click_at
+            >= self.config.pinky_click_cooldown_seconds
+        ):
+            self._pinky_click_latched = True
+            self._last_pinky_click_at = now
             return True
         return False
 
@@ -318,7 +324,7 @@ class GestureEngine:
         self._middle_pinched = False
         self._dragging = False
         self._reset_fist_candidate()
-        self._reset_thumb_click()
+        self._reset_pinky_click()
         self._last_two_finger_at = float("-inf")
         self._end_motion_session()
         return tuple(events)
@@ -344,7 +350,7 @@ class GestureEngine:
             self._index_pinched = False
             self._middle_pinched = False
             self._reset_fist_candidate()
-            self._reset_thumb_click()
+            self._reset_pinky_click()
             self._last_two_finger_at = now
             self._motion_session_active = True
             smoothed_point = self._smooth_motion_point(metrics.motion_point)
@@ -398,23 +404,26 @@ class GestureEngine:
                 and metrics.index_extended
                 and not metrics.middle_extended
                 and not metrics.ring_extended
-                and not metrics.pinky_extended
+                and (
+                    not metrics.pinky_extended
+                    or self.config.pinky_click_enabled
+                )
                 and not metrics.closed_fist
             )
             if (
                 pointer_active
-                and self.config.thumb_click_enabled
-                and self._thumb_click_triggered(metrics, now)
+                and self.config.pinky_click_enabled
+                and self._pinky_click_triggered(metrics, now)
             ):
                 events.append(GestureEvent.LEFT_CLICK)
             elif not pointer_active:
-                self._reset_thumb_click()
+                self._reset_pinky_click()
             return GestureFrame(
                 events=tuple(events),
                 cursor_active=pointer_active,
                 control_point=metrics.control_point,
                 mode=(
-                    "THUMB CLICK"
+                    "PINKY CLICK"
                     if GestureEvent.LEFT_CLICK in events
                     else ("POINTER" if pointer_active else "SCROLL ONLY")
                 ),

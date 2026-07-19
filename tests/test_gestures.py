@@ -13,7 +13,8 @@ def metrics(
     open_palm=False,
     closed_fist=False,
     two_finger=False,
-    thumb_ratio=0.0,
+    pinky_ratio=0.0,
+    pinky_extended=False,
     wrist=(0.5, 0.7),
 ):
     return GestureMetrics(
@@ -23,8 +24,9 @@ def metrics(
         middle_pinch_ratio=middle_ratio,
         index_extended=index_extended,
         open_palm=open_palm,
-        thumb_open_ratio=thumb_ratio,
+        pinky_open_ratio=pinky_ratio,
         middle_extended=two_finger,
+        pinky_extended=pinky_extended,
         closed_fist=closed_fist,
         motion_point=wrist,
         two_finger_gesture=two_finger,
@@ -282,51 +284,86 @@ class ScrollOnlyGestureEngineTests(unittest.TestCase):
         self.assertFalse(fist.cursor_active)
         self.assertEqual(fist.events, ())
 
-    def test_outward_thumb_clicks_once_until_retracted(self):
+    def test_outward_pinky_clicks_once_until_retracted(self):
         engine = GestureEngine(
             GestureConfig(
                 scroll_only=True,
                 pointer_enabled=True,
-                thumb_click_enabled=True,
-                thumb_click_open_threshold=1.20,
-                thumb_click_release_threshold=1.05,
-                thumb_click_hold_seconds=0.10,
-                thumb_click_min_frames=3,
-                thumb_click_cooldown_seconds=0.35,
+                pinky_click_enabled=True,
+                pinky_click_open_threshold=1.15,
+                pinky_click_release_threshold=0.90,
+                pinky_click_hold_seconds=0.10,
+                pinky_click_min_frames=3,
+                pinky_click_cooldown_seconds=0.35,
             )
         )
         opening = [
-            engine.update(metrics(thumb_ratio=1.35), now)
+            engine.update(
+                metrics(pinky_ratio=1.35, pinky_extended=True),
+                now,
+            )
             for now in (1.00, 1.06, 1.12)
         ]
-        held = engine.update(metrics(thumb_ratio=1.35), 1.20)
-        engine.update(metrics(thumb_ratio=0.90), 1.30)
+        held = engine.update(
+            metrics(pinky_ratio=1.35, pinky_extended=True),
+            1.20,
+        )
+        engine.update(metrics(pinky_ratio=0.70), 1.30)
         reopened = [
-            engine.update(metrics(thumb_ratio=1.35), now)
+            engine.update(
+                metrics(pinky_ratio=1.35, pinky_extended=True),
+                now,
+            )
             for now in (1.50, 1.56, 1.62)
         ]
+        self.assertTrue(opening[-1].cursor_active)
         self.assertNotIn(GestureEvent.LEFT_CLICK, opening[0].events)
         self.assertIn(GestureEvent.LEFT_CLICK, opening[-1].events)
         self.assertNotIn(GestureEvent.LEFT_CLICK, held.events)
         self.assertIn(GestureEvent.LEFT_CLICK, reopened[-1].events)
 
-    def test_thumb_does_not_click_during_two_finger_scroll(self):
+    def test_pinky_click_requires_extended_pinky(self):
         engine = GestureEngine(
             GestureConfig(
                 scroll_only=True,
                 pointer_enabled=True,
-                thumb_click_enabled=True,
-                thumb_click_open_threshold=1.20,
-                thumb_click_release_threshold=1.05,
-                thumb_click_hold_seconds=0.10,
-                thumb_click_min_frames=3,
+                pinky_click_enabled=True,
+                pinky_click_open_threshold=1.15,
+                pinky_click_release_threshold=0.90,
+                pinky_click_hold_seconds=0.10,
+                pinky_click_min_frames=3,
+            )
+        )
+        results = [
+            engine.update(metrics(pinky_ratio=1.50), now)
+            for now in (1.00, 1.06, 1.12, 1.18)
+        ]
+        self.assertTrue(all(result.cursor_active for result in results))
+        self.assertTrue(
+            all(
+                GestureEvent.LEFT_CLICK not in result.events
+                for result in results
+            )
+        )
+
+    def test_pinky_does_not_click_during_two_finger_scroll(self):
+        engine = GestureEngine(
+            GestureConfig(
+                scroll_only=True,
+                pointer_enabled=True,
+                pinky_click_enabled=True,
+                pinky_click_open_threshold=1.15,
+                pinky_click_release_threshold=0.90,
+                pinky_click_hold_seconds=0.10,
+                pinky_click_min_frames=3,
             )
         )
         results = [
             engine.update(
                 metrics(
                     two_finger=True,
-                    thumb_ratio=1.50,
+                    pinky_ratio=1.50,
+                    pinky_extended=True,
                     wrist=(0.5, 0.70 - index * 0.02),
                 ),
                 1.0 + index * 0.06,

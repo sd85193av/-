@@ -1,16 +1,16 @@
 # 手勢上下滾動與游標控制器
 
-這是一個 Windows 手勢控制原型，使用筆電攝影機與 MediaPipe 在本機追蹤手部關節。單獨伸出食指可移動鼠標、拇指向外張開可左鍵單擊，伸出食指＋中指可控制畫面上下滾動。
+這是一個 Windows 手勢控制原型，使用筆電攝影機與 MediaPipe 在本機追蹤手部關節。單獨伸出食指可移動鼠標、小拇指向外張開可左鍵單擊，伸出食指＋中指可控制畫面上下滾動。
 
 攝影機影像只在本機即時處理，不會上傳或儲存。
 
 ## 目前啟用的手勢
 
-目前只保留游標移動與兩指上下滾動：
+目前只保留游標移動、小拇指點擊與兩指上下滾動：
 
 - 單獨伸出食指：鼠標跟隨食指位置移動，不會點擊。
-- 維持單食指姿勢並將拇指向外張開：左鍵單擊一次。
-- 拇指持續張開不會連點；收回後再次張開才可再點。
+- 維持食指伸出並將小拇指向外張開：左鍵單擊一次。
+- 小拇指持續張開不會連點；收回後再次張開才可再點。
 - 食指＋中指往上移動：畫面往上滾動。
 - 食指＋中指往下移動：畫面往下滾動。
 - 短促的反方向動作會視為回手，不會觸發反向滾動。
@@ -73,8 +73,8 @@
 - 上下回手動作不會反向觸發。
 - 持續反向移動可在不收手指的情況下切換方向。
 - 單食指只移動游標，不會產生點擊事件。
-- 單食指＋拇指外張只會產生一次左鍵點擊。
-- 兩指滾動時拇指外張不會誤觸點擊。
+- 食指＋小拇指外張只會產生一次左鍵點擊。
+- 兩指滾動時小拇指外張不會誤觸點擊。
 - 其他點擊、拖曳與翻頁功能在 scroll-only 模式下停用。
 - 設定載入、手部幾何判定與監測面板繪製。
 
@@ -84,10 +84,10 @@
 
 - `gestures.scroll_only`：停用點擊、拖曳與翻頁手勢。
 - `gestures.pointer_enabled`：允許單食指移動游標。
-- `gestures.thumb_click_enabled`：允許拇指外張左鍵單擊。
-- `gestures.thumb_click_open_threshold`：拇指外張的啟動門檻。
-- `gestures.thumb_click_release_threshold`：拇指收回的解除門檻。
-- `gestures.thumb_click_hold_seconds`：單擊前需穩定張開的時間。
+- `gestures.pinky_click_enabled`：允許小拇指外張左鍵單擊。
+- `gestures.pinky_click_open_threshold`：小拇指外張的啟動門檻。
+- `gestures.pinky_click_release_threshold`：小拇指收回的解除門檻。
+- `gestures.pinky_click_hold_seconds`：單擊前需穩定張開的時間。
 - `gestures.scroll_return_motion_suppression`：抑制短促的反向回手動作。
 - `gestures.scroll_direction_switch_seconds`：自動切換方向所需的持續時間。
 - `gestures.scroll_direction_switch_distance`：自動切換方向所需的反向位移。

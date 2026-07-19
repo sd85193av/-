@@ -127,7 +127,7 @@ def draw_status(
     cv2.rectangle(frame, (0, height - 34), (width, height), (20, 20, 20), -1)
     cv2.putText(
         frame,
-        "ESC quit | F8 pause | index=pointer | thumb=open click | 2=scroll",
+        "ESC quit | F8 pause | index=pointer | pinky=open click | 2=scroll",
         (12, height - 11),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.46,
