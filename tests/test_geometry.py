@@ -28,8 +28,8 @@ class GeometryTests(unittest.TestCase):
 
         self.assertTrue(result.two_finger_gesture)
         self.assertFalse(result.closed_fist)
-        self.assertAlmostEqual(result.motion_point[0], 0.44)
-        self.assertAlmostEqual(result.motion_point[1], 0.225)
+        self.assertAlmostEqual(result.motion_point[0], 0.46)
+        self.assertAlmostEqual(result.motion_point[1], 0.635)
 
     def test_compact_curled_fingers_are_detected_as_fist(self):
         points = landmark_set()

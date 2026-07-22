@@ -21,14 +21,20 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(
             config.gestures.scroll_return_motion_suppression
         )
-        self.assertLess(
+        self.assertEqual(
             config.gestures.scroll_down_activation_distance,
             config.gestures.scroll_activation_distance,
         )
-        self.assertLess(
+        self.assertEqual(
             config.gestures.scroll_down_step_distance,
             config.gestures.scroll_step_distance,
         )
+        self.assertEqual(
+            config.gestures.scroll_down_wheel_multiplier,
+            1.0,
+        )
+        self.assertGreater(config.gestures.scroll_output_smoothing, 0.0)
+        self.assertGreater(config.gestures.scroll_idle_reset_seconds, 0.0)
         self.assertEqual(
             config.display.detail_follow_window_title,
             "ChatGPT",

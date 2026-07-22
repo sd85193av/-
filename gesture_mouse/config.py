@@ -58,6 +58,8 @@ class GestureConfig:
     scroll_cooldown_seconds: float = 0.02
     scroll_wheel_delta: int = 30
     scroll_max_wheel_delta: int = 90
+    scroll_output_smoothing: float = 0.45
+    scroll_idle_reset_seconds: float = 0.25
     scroll_direction_lock_until_release: bool = False
     scroll_return_motion_suppression: bool = False
     scroll_direction_switch_seconds: float = 0.22
@@ -193,6 +195,14 @@ def _validate(config: AppConfig) -> None:
         <= 240
     ):
         raise ValueError("scroll_max_wheel_delta 必須介於基礎值與 240")
+    if not 0.05 <= config.gestures.scroll_output_smoothing <= 1.0:
+        raise ValueError(
+            "gestures.scroll_output_smoothing 必須介於 0.05 與 1.0"
+        )
+    if not 0.05 <= config.gestures.scroll_idle_reset_seconds <= 0.50:
+        raise ValueError(
+            "gestures.scroll_idle_reset_seconds 必須介於 0.05 與 0.50"
+        )
     if config.display.detail_monitor_index < 0:
         raise ValueError("display.detail_monitor_index 不可小於 0")
     if len(config.display.detail_follow_window_title) > 200:

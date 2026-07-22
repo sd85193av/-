@@ -96,5 +96,7 @@
 - `gestures.scroll_down_step_distance`：向下連續觸發的步進距離。
 - `gestures.scroll_down_wheel_multiplier`：向下滾動量補償倍率。
 - `gestures.scroll_wheel_delta`：基礎滾動量。
-- `gestures.scroll_max_wheel_delta`：快速移動時的最大滾動量。
+- `gestures.scroll_max_wheel_delta`：以 30 FPS 為基準的單幀最大滾動量。
+- `gestures.scroll_output_smoothing`：滾動輸出速度的平滑比例。
+- `gestures.scroll_idle_reset_seconds`：追蹤中斷或停頓後重新對齊的時間。
 - `display.detail_follow_window_title`：監測視窗要跟隨的視窗標題。

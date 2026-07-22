@@ -115,8 +115,8 @@ def analyze_landmarks(landmarks: Sequence[LandmarkLike]) -> GestureMetrics:
         palm_scale=palm_scale,
         closed_fist=closed_fist,
         motion_point=(
-            (index_tip[0] + middle_tip[0]) / 2.0,
-            (index_tip[1] + middle_tip[1]) / 2.0,
+            (point(landmarks, 5)[0] + point(landmarks, 9)[0]) / 2.0,
+            (point(landmarks, 5)[1] + point(landmarks, 9)[1]) / 2.0,
         ),
         two_finger_gesture=(
             index_extended

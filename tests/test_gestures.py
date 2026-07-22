@@ -1,8 +1,13 @@
 import unittest
+from pathlib import Path
 
-from gesture_mouse.config import GestureConfig
+from gesture_mouse.config import GestureConfig, load_config
 from gesture_mouse.geometry import GestureMetrics
-from gesture_mouse.gestures import GestureEngine, GestureEvent
+from gesture_mouse.gestures import (
+    GestureEngine,
+    GestureEvent,
+    MotionGestureDetector,
+)
 
 
 def metrics(
@@ -127,19 +132,31 @@ class GestureEngineTests(unittest.TestCase):
         )
         self.assertIn(GestureEvent.SCROLL_DOWN, result.events)
 
-    def test_two_finger_short_dropout_keeps_motion_session(self):
-        self.engine.update(metrics(two_finger=True, wrist=(0.5, 0.70)), 1.0)
-        dropout = self.engine.update(
+    def test_two_finger_dropout_resyncs_without_jump(self):
+        engine = GestureEngine(
+            GestureConfig(scroll_idle_reset_seconds=0.14)
+        )
+        engine.update(metrics(two_finger=True, wrist=(0.5, 0.70)), 1.0)
+        dropout = engine.update(
             metrics(index_extended=False, two_finger=False),
             1.1,
         )
-        resumed = self.engine.update(
+        resumed = engine.update(
             metrics(two_finger=True, wrist=(0.5, 0.58)),
             1.18,
         )
+        continued = engine.update(
+            metrics(two_finger=True, wrist=(0.5, 0.54)),
+            1.22,
+        )
         self.assertEqual(dropout.mode, "TWO-FINGER HOLD")
         self.assertFalse(dropout.cursor_active)
-        self.assertIn(GestureEvent.SCROLL_UP, resumed.events)
+        self.assertEqual(resumed.events, ())
+        self.assertIn(GestureEvent.SCROLL_UP, continued.events)
+        self.assertLess(
+            continued.scroll_wheel_delta,
+            engine.config.scroll_max_wheel_delta,
+        )
 
     def test_small_rebound_does_not_reverse_scroll_direction(self):
         self.engine.update(metrics(two_finger=True, wrist=(0.5, 0.70)), 1.0)
@@ -351,6 +368,125 @@ class ScrollOnlyGestureEngineTests(unittest.TestCase):
         )
         self.assertEqual(upward.events, (GestureEvent.SCROLL_UP,))
         self.assertGreater(upward.scroll_wheel_delta, 0)
+
+    @staticmethod
+    def _smooth_detector() -> MotionGestureDetector:
+        config_path = Path(__file__).resolve().parents[1] / "config.json"
+        return MotionGestureDetector(load_config(config_path).gestures)
+
+    def test_diagonal_motion_still_scrolls_in_scroll_only_mode(self):
+        detector = self._smooth_detector()
+        detector.update(1.000, (0.50, 0.50))
+        result = detector.update(1.033, (0.51, 0.49))
+        self.assertIsNotNone(result)
+        self.assertEqual(result.event, GestureEvent.SCROLL_UP)
+
+    def test_scroll_starts_at_base_delta_instead_of_maximum(self):
+        detector = self._smooth_detector()
+        detector.update(1.000, (0.50, 0.50))
+        result = detector.update(1.033, (0.50, 0.48))
+        self.assertIsNotNone(result)
+        self.assertEqual(result.wheel_delta, 24)
+        self.assertLess(result.wheel_delta, 72)
+
+    def test_equal_up_and_down_motion_have_equal_output(self):
+        upward = self._smooth_detector()
+        downward = self._smooth_detector()
+        upward.update(1.000, (0.50, 0.50))
+        downward.update(1.000, (0.50, 0.50))
+        up_result = upward.update(1.033, (0.50, 0.49))
+        down_result = downward.update(1.033, (0.50, 0.51))
+        self.assertEqual(up_result.wheel_delta, down_result.wheel_delta)
+
+    def test_fast_motion_ramps_output_without_a_sudden_jump(self):
+        detector = self._smooth_detector()
+        detector.update(1.000, (0.50, 0.50))
+        first = detector.update(1.033, (0.50, 0.49))
+        second = detector.update(1.066, (0.50, 0.47))
+        third = detector.update(1.099, (0.50, 0.45))
+        self.assertLess(first.wheel_delta, second.wheel_delta)
+        self.assertLess(second.wheel_delta, third.wheel_delta)
+        self.assertLessEqual(third.wheel_delta, 72)
+
+    def test_multiframe_return_to_origin_never_scrolls_reverse(self):
+        detector = self._smooth_detector()
+        detector.update(1.000, (0.50, 0.70))
+        upward = detector.update(1.033, (0.50, 0.68))
+        detector.update(1.066, (0.50, 0.62))
+        returning = [
+            detector.update(now, (0.50, y))
+            for now, y in (
+                (1.099, 0.63),
+                (1.132, 0.64),
+                (1.165, 0.65),
+                (1.198, 0.66),
+                (1.231, 0.67),
+                (1.264, 0.68),
+                (1.297, 0.69),
+                (1.330, 0.70),
+            )
+        ]
+        upward_again = detector.update(1.363, (0.50, 0.68))
+        self.assertEqual(upward.event, GestureEvent.SCROLL_UP)
+        self.assertTrue(
+            all(
+                result is None or result.event != GestureEvent.SCROLL_DOWN
+                for result in returning
+            )
+        )
+        self.assertEqual(upward_again.event, GestureEvent.SCROLL_UP)
+
+    def test_reverse_switch_requires_motion_beyond_origin(self):
+        detector = self._smooth_detector()
+        detector.update(1.000, (0.50, 0.70))
+        detector.update(1.033, (0.50, 0.68))
+        detector.update(1.066, (0.50, 0.60))
+        results = [
+            detector.update(now, (0.50, y))
+            for now, y in (
+                (1.099, 0.64),
+                (1.132, 0.68),
+                (1.165, 0.71),
+                (1.198, 0.73),
+                (1.231, 0.75),
+                (1.264, 0.76),
+            )
+        ]
+        self.assertTrue(
+            all(
+                result is None or result.event != GestureEvent.SCROLL_DOWN
+                for result in results[:-1]
+            )
+        )
+        self.assertEqual(results[-1].event, GestureEvent.SCROLL_DOWN)
+
+    def test_stationary_tracking_noise_does_not_scroll(self):
+        detector = self._smooth_detector()
+        results = [
+            detector.update(
+                1.000 + index * 0.033,
+                (0.50, 0.50 + (0.001 if index % 2 else -0.001)),
+            )
+            for index in range(12)
+        ]
+        self.assertTrue(all(result is None for result in results))
+
+    def test_total_scroll_is_stable_across_frame_rates(self):
+        totals = []
+        for fps in (15, 30, 60):
+            detector = self._smooth_detector()
+            frame_count = round(0.6 * fps)
+            results = [
+                detector.update(
+                    index / fps,
+                    (0.50, 0.70 - 0.18 * index / frame_count),
+                )
+                for index in range(frame_count + 1)
+            ]
+            totals.append(
+                sum(result.wheel_delta for result in results if result)
+            )
+        self.assertLess(max(totals) / min(totals), 1.15)
 
     def test_small_downward_motion_is_more_sensitive_and_continuous(self):
         engine = GestureEngine(

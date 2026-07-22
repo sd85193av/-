@@ -179,10 +179,10 @@ def perform_event(
         return "NEXT"
     if event == GestureEvent.SCROLL_UP:
         controller.scroll("up", scroll_wheel_delta)
-        return "SCROLL UP"
+        return f"SCROLL UP ({scroll_wheel_delta})"
     if event == GestureEvent.SCROLL_DOWN:
         controller.scroll("down", scroll_wheel_delta)
-        return "SCROLL DOWN"
+        return f"SCROLL DOWN ({scroll_wheel_delta})"
     return ""
 
 
